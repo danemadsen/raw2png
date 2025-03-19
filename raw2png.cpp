@@ -25,18 +25,13 @@
 #include <stdint.h>
 
 int main(int argc, char *argv[]) {
-    if (argc != 5) {
-        fprintf(stderr, "Usage: %s input.raw width height output.png\n", argv[0]);
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s input.raw output.png\n", argv[0]);
         return 1;
     }
     
     const char *input_file = argv[1];
-    int width = atoi(argv[2]);
-    int height = atoi(argv[3]);
-    const char *output_file = argv[4];
-
-    size_t num_pixels = (size_t)width * height;
-    size_t expected_size = num_pixels * 2;  // 2 bytes per pixel (RGBA4444)
+    const char *output_file = argv[2];
 
     // Open the input file in binary mode.
     FILE *fp = fopen(input_file, "rb");
@@ -44,6 +39,31 @@ int main(int argc, char *argv[]) {
         perror("Error opening input file");
         return 1;
     }
+
+    // Determine the size of the file
+    fseek(fp, 0, SEEK_END);
+    long file_size = ftell(fp);
+    rewind(fp);
+
+    if (file_size % 2 != 0) {
+        fprintf(stderr, "Invalid file size. Must be divisible by 2.\n");
+        fclose(fp);
+        return 1;
+    }
+
+    size_t num_pixels = file_size / 2;
+    int dimension = (int)sqrt(num_pixels);
+
+    if (dimension * dimension != num_pixels) {
+        fprintf(stderr, "Input file does not represent a square image.\n");
+        fclose(fp);
+        return 1;
+    }
+
+    int width = dimension;
+    int height = dimension;
+
+    size_t expected_size = num_pixels * 2;
 
     // Allocate memory to hold the raw data.
     uint8_t *raw_data = (uint8_t *)malloc(expected_size);
