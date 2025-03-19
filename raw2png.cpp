@@ -1,20 +1,4 @@
-/*
-* raw2png.cpp
-*
-* This program reads a raw file in RGBA4444 format and converts it to a PNG image.
-* Usage: raw2png input.raw width height output.png
-*
-* Note: The raw file is expected to have width*height pixels, each pixel being 2 bytes:
-*       4 bits per channel in RGBA order.
-*
-*       The program converts this data into RGBA8888 for PNG output.
-*
-*       Download stb_image_write.h from:
-*       https://github.com/nothings/stb/blob/master/stb_image_write.h
-*       and place it in the same directory as this file.
-*/
-
-#include <algorithm>  // Needed for std::min in C++ mode
+#include <algorithm>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_STATIC
@@ -54,7 +38,11 @@ int main(int argc, char *argv[]) {
     size_t num_pixels = file_size / 2;
     int dimension = (int)sqrt(num_pixels);
 
-    if (dimension * dimension != num_pixels) {
+    printf("Number of pixels: %zu\n", num_pixels);
+    printf("Dimension: %d x %d\n", dimension, dimension);
+
+    int threshold = 10;
+    if (abs((dimension * dimension) - (int)num_pixels) > threshold) {
         fprintf(stderr, "Input file does not represent a square image.\n");
         fclose(fp);
         return 1;
