@@ -1,13 +1,13 @@
 /*
 * raw2png.cpp
 *
-* This program reads a raw file in ARGB8888 format and converts it to a PNG image.
+* This program reads a raw file in RGBA4444 format and converts it to a PNG image.
 * Usage: raw2png input.raw width height output.png
 *
-* Note: The raw file is expected to have width*height pixels, each pixel being 4 bytes:
-*       A, R, G, B.
+* Note: The raw file is expected to have width*height pixels, each pixel being 2 bytes:
+*       4 bits per channel in RGBA order.
 *
-*       The program converts this data into RGBA order for PNG output.
+*       The program converts this data into RGBA8888 for PNG output.
 *
 *       Download stb_image_write.h from:
 *       https://github.com/nothings/stb/blob/master/stb_image_write.h
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     const char *output_file = argv[4];
 
     size_t num_pixels = (size_t)width * height;
-    size_t expected_size = num_pixels * 2;  // 2 bytes per pixel (ARGB4444)
+    size_t expected_size = num_pixels * 2;  // 2 bytes per pixel (RGBA4444)
 
     // Open the input file in binary mode.
     FILE *fp = fopen(input_file, "rb");
@@ -70,16 +70,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int r_sum = 0;
-    int g_sum = 0;
-    int b_sum = 0;
-    int a_sum = 0;
-
-    // Convert each pixel from ARGB4444 to RGBA8888.
-    // For each pixel, two bytes are read:
-    //   First byte: high nibble = A, low nibble = R.
-    //   Second byte: high nibble = G, low nibble = B.
-    // Each 4-bit value is expanded to 8 bits by: (value << 4) | value.
+    // Convert each pixel from BGRAA4444 to RGBA8888.
     for (size_t i = 0; i < num_pixels; i++) {
         uint8_t byte0 = raw_data[i * 2 + 0];
         uint8_t byte1 = raw_data[i * 2 + 1];
@@ -89,15 +80,10 @@ int main(int argc, char *argv[]) {
         uint8_t R = byte1 >> 4;
         uint8_t A = byte1 & 0x0F;
 
-        r_sum += R;
-        g_sum += G;
-        b_sum += B;
-        a_sum += A;
-
-        uint8_t A8 = (A << 4) | A;
         uint8_t R8 = (R << 4) | R;
         uint8_t G8 = (G << 4) | G;
         uint8_t B8 = (B << 4) | B;
+        uint8_t A8 = (A << 4) | A;
 
         // Write the pixel in RGBA order.
         rgba_data[i * 4 + 0] = R8;
@@ -105,9 +91,6 @@ int main(int argc, char *argv[]) {
         rgba_data[i * 4 + 2] = B8;
         rgba_data[i * 4 + 3] = A8;
     }
-
-    // Print the sums of each channel.
-    printf("R: %d, G: %d, B: %d, A: %d\n", r_sum, g_sum, b_sum, a_sum);
 
     // Write the RGBA data as a PNG file.
     // The last parameter (width * 4) is the stride (bytes per row).
