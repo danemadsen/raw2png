@@ -70,6 +70,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    int r_sum = 0;
+    int g_sum = 0;
+    int b_sum = 0;
+    int a_sum = 0;
+
     // Convert each pixel from ARGB4444 to RGBA8888.
     // For each pixel, two bytes are read:
     //   First byte: high nibble = A, low nibble = R.
@@ -79,10 +84,15 @@ int main(int argc, char *argv[]) {
         uint8_t byte0 = raw_data[i * 2 + 0];
         uint8_t byte1 = raw_data[i * 2 + 1];
 
-        uint8_t A = byte0 >> 4;
-        uint8_t R = byte0 & 0x0F;
-        uint8_t G = byte1 >> 4;
-        uint8_t B = byte1 & 0x0F;
+        uint8_t B = byte0 >> 4;
+        uint8_t G = byte0 & 0x0F;
+        uint8_t R = byte1 >> 4;
+        uint8_t A = byte1 & 0x0F;
+
+        r_sum += R;
+        g_sum += G;
+        b_sum += B;
+        a_sum += A;
 
         uint8_t A8 = (A << 4) | A;
         uint8_t R8 = (R << 4) | R;
@@ -95,6 +105,9 @@ int main(int argc, char *argv[]) {
         rgba_data[i * 4 + 2] = B8;
         rgba_data[i * 4 + 3] = A8;
     }
+
+    // Print the sums of each channel.
+    printf("R: %d, G: %d, B: %d, A: %d\n", r_sum, g_sum, b_sum, a_sum);
 
     // Write the RGBA data as a PNG file.
     // The last parameter (width * 4) is the stride (bytes per row).
