@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     const char *output_file = argv[4];
 
     size_t num_pixels = (size_t)width * height;
-    size_t expected_size = num_pixels * 4;  // 4 bytes per pixel (ARGB)
+    size_t expected_size = num_pixels * 2;  // 2 bytes per pixel (ARGB4444)
 
     // Open the input file in binary mode.
     FILE *fp = fopen(input_file, "rb");
@@ -62,29 +62,42 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // Allocate memory for the converted RGBA data.
-    uint8_t *rgba_data = (uint8_t *)malloc(expected_size);
+    // Allocate memory for the converted RGBA data (8 bits per channel).
+    uint8_t *rgba_data = (uint8_t *)malloc(num_pixels * 4);
     if (!rgba_data) {
         fprintf(stderr, "Memory allocation error\n");
         free(raw_data);
         return 1;
     }
 
-    // Convert each pixel from ARGB (A,R,G,B) to RGBA (R,G,B,A).
+    // Convert each pixel from ARGB4444 to RGBA8888.
+    // For each pixel, two bytes are read:
+    //   First byte: high nibble = A, low nibble = R.
+    //   Second byte: high nibble = G, low nibble = B.
+    // Each 4-bit value is expanded to 8 bits by: (value << 4) | value.
     for (size_t i = 0; i < num_pixels; i++) {
-        uint8_t A = raw_data[i * 4 + 0];
-        uint8_t R = raw_data[i * 4 + 1];
-        uint8_t G = raw_data[i * 4 + 2];
-        uint8_t B = raw_data[i * 4 + 3];
+        uint8_t byte0 = raw_data[i * 2 + 0];
+        uint8_t byte1 = raw_data[i * 2 + 1];
 
-        rgba_data[i * 4 + 0] = R;
-        rgba_data[i * 4 + 1] = G;
-        rgba_data[i * 4 + 2] = B;
-        rgba_data[i * 4 + 3] = A;
+        uint8_t A = byte0 >> 4;
+        uint8_t R = byte0 & 0x0F;
+        uint8_t G = byte1 >> 4;
+        uint8_t B = byte1 & 0x0F;
+
+        uint8_t A8 = (A << 4) | A;
+        uint8_t R8 = (R << 4) | R;
+        uint8_t G8 = (G << 4) | G;
+        uint8_t B8 = (B << 4) | B;
+
+        // Write the pixel in RGBA order.
+        rgba_data[i * 4 + 0] = R8;
+        rgba_data[i * 4 + 1] = G8;
+        rgba_data[i * 4 + 2] = B8;
+        rgba_data[i * 4 + 3] = A8;
     }
 
     // Write the RGBA data as a PNG file.
-    // The last parameter (width * 4) is the number of bytes in a row (the stride).
+    // The last parameter (width * 4) is the stride (bytes per row).
     int write_result = stbi_write_png(output_file, width, height, 4, rgba_data, width * 4);
     if (!write_result) {
         fprintf(stderr, "Failed to write PNG file.\n");
