@@ -70,20 +70,20 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // Convert each pixel from BGRAA4444 to RGBA8888.
+    // Convert each pixel from BGRA4444 to RGBA8888 with accurate scaling.
     for (size_t i = 0; i < num_pixels; i++) {
         uint8_t byte0 = raw_data[i * 2 + 0];
         uint8_t byte1 = raw_data[i * 2 + 1];
 
-        uint8_t B = byte0 >> 4;
-        uint8_t G = byte0 & 0x0F;
-        uint8_t R = byte1 >> 4;
-        uint8_t A = byte1 & 0x0F;
+        uint8_t R4 = byte1 >> 4;
+        uint8_t G4 = byte1 & 0x0F;
+        uint8_t B4 = byte0 >> 4;
+        uint8_t A4 = byte0 & 0x0F;
 
-        uint8_t R8 = (R << 4) | R;
-        uint8_t G8 = (G << 4) | G;
-        uint8_t B8 = (B << 4) | B;
-        uint8_t A8 = (A << 4) | A;
+        uint8_t R8 = (R4 * 255 + 7) / 15;
+        uint8_t G8 = (G4 * 255 + 7) / 15;
+        uint8_t B8 = (B4 * 255 + 7) / 15;
+        uint8_t A8 = (A4 * 255 + 7) / 15;
 
         // Write the pixel in RGBA order.
         rgba_data[i * 4 + 0] = R8;
