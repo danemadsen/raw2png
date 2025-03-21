@@ -1,4 +1,4 @@
-# BGRA4444 to PNG Converter
+# BARG4444 to PNG Converter
 
 The program assumes the image is square.
 
